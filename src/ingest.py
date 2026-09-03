@@ -66,18 +66,22 @@ def validate_data(data):
     logger.info(f"Validacion correcta: {len(data)} registros")
 
 
-def save_json(data):
-    with open("data/users.json", "w") as file:
+def save_json(data, path):
+    with open(path, "w") as file:
         json.dump(data, file, indent=4)
 
-    logger.info("Datos guardados en json")
+    logger.info(f"Datos guardados en {path}")
 
 def main():
     data = extract_data()
 
+    save_json(data, "data/raw/users.json")
+
     validate_data(data)
 
     data = transform_data(data)
+
+    save_json(data, "data/processed/users.json")
 
     try:
 
@@ -105,8 +109,6 @@ def main():
     finally:
         if "conn" in locals():
             conn.close()
-
-    save_json(data)
 
 if __name__ == "__main__":
     main()

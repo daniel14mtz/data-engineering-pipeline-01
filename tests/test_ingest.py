@@ -66,3 +66,26 @@ def test_validate_data_empty():
 
     with pytest.raises(ValueError):
         validate_data(data)
+
+def test_save_json(tmp_path):
+    from src.ingest import save_json
+    import json
+
+    data = [
+        {
+            "id": 1,
+            "name": "Juan",
+            "email": "juan@example.com"
+        }
+    ]
+
+    file_path = tmp_path / "users.json"
+
+    save_json(data, file_path)
+
+    assert file_path.exists()
+
+    with open(file_path) as file:
+        result = json.load(file)
+
+    assert result == data
