@@ -2,7 +2,7 @@ import requests
 import json
 import logging 
 
-from database import connect_db, create_table, insert_data, count_users
+from src.database import connect_db, create_table, insert_data, count_users
 
 URL = "https://jsonplaceholder.typicode.com/users"
 
