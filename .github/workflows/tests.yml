@@ -42,4 +42,10 @@ jobs:
           pip install pytest requests psycopg2-binary
 
       - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: dataeng
+          DB_USER: dataeng
+          DB_PASSWORD: dataeng
         run: pytest
