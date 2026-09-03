@@ -1,6 +1,7 @@
 import requests
 import json
 import logging 
+import time
 
 from src.database import connect_db, create_table, insert_data, count_users
 
@@ -16,19 +17,39 @@ logger = logging.getLogger(__name__)
 def extract_data():
     logger.info("Iniciando extraccion de datos")
 
-    try:
-        response = requests.get(URL, timeout=10)
-        response.raise_for_status()
+    max_retries = 3
 
-        data = response.json()
+    for attempt in range(1, max_retries + 1):
 
-        logger.info(f"Extraccion completada: {len(data)} registros")
+        try:
+            response = requests.get(URL, timeout=10)
+            response.raise_for_status()
 
-        return data
+            data = response.json()
 
-    except requests.RequestException as e:
-        logger.error(f"Error en la extraccion: {e}")
-        raise
+            logger.info(f"Extraccion completada: {len(data)} registros")
+
+            return data
+
+        except requests.RequestException as e:
+            logger.error(
+                f"Error en la extraccion. "
+                f"Intento {attempt}/{max_retries}: {e}"
+            )
+
+            if attempt < max_retries:
+                wait_time = 2 ** attempt
+
+                logger.info(
+                    f"Reintentando en {wait_time} segundos..."
+                )
+
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    "Se agotaron los reintentos de extraccion"
+                )
+                raise
 
 def transform_data(data):
     transformed_data = []

@@ -1,5 +1,6 @@
 from src.ingest import validate_data
 import pytest
+import requests
 
 def test_validate_data_success():
     data = [
@@ -89,3 +90,38 @@ def test_save_json(tmp_path):
         result = json.load(file)
 
     assert result == data
+
+def test_extract_data_retry(monkeypatch):
+    from src.ingest import extract_data
+
+    attempts = []
+
+    class MockResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return [
+                {
+                    "id": 1,
+                    "name": "Juan",
+                    "email": "juan@example.com"
+                }
+            ]
+
+    def mock_get(url, timeout):
+        attempts.append(1)
+
+        if len(attempts) < 3:
+            raise requests.RequestException("Error temporal")
+
+        return MockResponse()
+
+    monkeypatch.setattr("src.ingest.requests.get", mock_get)
+
+    monkeypatch.setattr("src.ingest.time.sleep", lambda seconds: None)
+
+    data = extract_data()
+
+    assert len(attempts) == 3
+    assert data[0]["id"] == 1
