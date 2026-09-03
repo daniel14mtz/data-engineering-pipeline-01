@@ -1,13 +1,48 @@
 import requests
 import json
-import psycopg2
+import logging 
+
+from database import connect_db, create_table, insert_data
 
 URL = "https://jsonplaceholder.typicode.com/users"
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
 def extract_data():
-    response = requests.get(URL, timeout=10)
-    response.raise_for_status()
-    return response.json()
+    logger.info("Iniciando extraccion de datos")
+
+    try:
+        response = requests.get(URL, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+
+        logger.info(f"Extraccion completada: {len(data)} registros")
+
+        return data
+
+    except requests.RequestException as e:
+        logger.error(f"Error en la extraccion: {e}")
+        raise
+
+def transform_data(data):
+    transformed_data = []
+
+    for user in data:
+        transformed_data.append({
+            "id": user["id"],
+            "name": user["name"].strip(),
+            "email": user["email"].strip().lower()
+        })
+
+    logger.info(f"Transformacion correcta: {len(transformed_data)} registros")
+
+    return transformed_data
 
 def validate_data(data):
     if not data:
@@ -28,77 +63,39 @@ def validate_data(data):
     if len(ids) != len(set(ids)):
         raise ValueError("Existen IDs duplicados")
 
-    print(f"Validacion correcta: {len(data)} registros")
-
-def connect_db():
-    return psycopg2.connect(
-        host="localhost",
-        port=5432,
-        database="dataeng",
-        user="dataeng",
-        password="dataeng"
-    )
-
-def create_table(conn):
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            name VARCHAR(100),
-            email VARCHAR(150)
-        );
-    """)
-
-    conn.commit()
-    cursor.close()
-
-    print("Table users lista")
-
-def insert_data(conn, data):
-    cursor = conn.cursor()
-
-    query = """
-        INSERT INTO users (id, name, email)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (id) DO UPDATE
-        SET name = EXCLUDED.name,
-            email = EXCLUDED.email;
-    """
-
-    for user in data:
-        cursor.execute(
-            query,
-            (
-                user["id"],
-                user["name"],
-                user["email"]
-            )
-        )
-
-    conn.commit()
-    cursor.close()
-
-    print(f"{len(data)} registros insertados en PostgreSQL")
+    logger.info(f"Validacion correcta: {len(data)} registros")
 
 
 def save_json(data):
     with open("data/users.json", "w") as file:
         json.dump(data, file, indent=4)
 
-    print("Datos guardados en json")
+    logger.info("Datos guardados en json")
 
 def main():
     data = extract_data()
+
     validate_data(data)
 
-    conn = connect_db()
+    data = transform_data(data)
 
     try:
+
+        logger.info("Conectando a PostgreSQL")
+
+        conn = connect_db()
+
         create_table(conn)
         insert_data(conn, data)
+
+        logger.info("Datos guardados en PostgreSQL")
+
+    except Exception as e:
+        logger.error(f"Error en la carga a PostgreSQL: {e}")
+        raise
     finally:
-        conn.close()
+        if "conn" in locals():
+            conn.close()
 
     save_json(data)
 
