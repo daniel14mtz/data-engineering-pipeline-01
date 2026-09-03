@@ -60,3 +60,9 @@ def test_transform_data():
             "email": "juan@example.com"
         }
     ]
+
+def test_validate_data_empty():
+    data = []
+
+    with pytest.raises(ValueError):
+        validate_data(data)
