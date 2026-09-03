@@ -4,13 +4,13 @@ on:
     push:
         branches:
             - main
-    pull_requests:
+    pull_request:
         branches:
             - main
 
 jobs:
     test:
-        runs-om: ubuntu-latest
+        runs-on: ubuntu-latest
 
         steps:
             - name: Checkout repository
