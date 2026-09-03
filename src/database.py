@@ -48,3 +48,14 @@ def insert_data(conn, data):
 
     conn.commit()
     cursor.close()
+
+def count_users(conn):
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM users;")
+
+    count = cursor.fetchone()[0]
+
+    cursor.close()
+
+    return count

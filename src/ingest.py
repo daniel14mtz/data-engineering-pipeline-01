@@ -2,7 +2,7 @@ import requests
 import json
 import logging 
 
-from database import connect_db, create_table, insert_data
+from database import connect_db, create_table, insert_data, count_users
 
 URL = "https://jsonplaceholder.typicode.com/users"
 
@@ -89,6 +89,15 @@ def main():
         insert_data(conn, data)
 
         logger.info("Datos guardados en PostgreSQL")
+
+        loaded_count = count_users(conn)
+
+        if loaded_count != len(data):
+            raise ValueError(
+                f"Data Quality Error: esperados {len(data)}, encontrados {loaded_count}"
+            )
+
+        logger.info(f"Data Quality OK: {loaded_count} registros cargados")
 
     except Exception as e:
         logger.error(f"Error en la carga a PostgreSQL: {e}")
