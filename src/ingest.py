@@ -58,21 +58,12 @@ def save_json(data, path):
 
     logger.info(f"Datos guardados en {path}")
 
-def main():
-    data = extract_data()
+def load_data(data):
+    logger.info("Conectando a PostgreSQL")
 
-    save_json(data, RAW_PATH)
-
-    validate_data(data)
-
-    data = transform_data(data)
-
-    save_json(data, PROCESSED_PATH)
+    conn = None
 
     try:
-
-        logger.info("Conectando a PostgreSQL")
-
         conn = connect_db()
 
         create_table(conn)
@@ -92,9 +83,23 @@ def main():
     except Exception as e:
         logger.error(f"Error en la carga a PostgreSQL: {e}")
         raise
+
     finally:
-        if "conn" in locals():
+        if conn is not None:
             conn.close()
+
+def main():
+    data = extract_data()
+
+    save_json(data, RAW_PATH)
+
+    validate_data(data)
+
+    data = transform_data(data)
+
+    load_data(data)
+
+    save_json(data, PROCESSED_PATH)
 
 if __name__ == "__main__":
     main()
