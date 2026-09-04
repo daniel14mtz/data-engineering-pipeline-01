@@ -54,10 +54,15 @@ def insert_data(conn, data):
     conn.commit()
     cursor.close()
 
-def count_users(conn):
+def count_loaded_users(conn, data):
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM users;")
+    ids = [user["id"] for user in data]
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM users WHERE id = ANY(%s);",
+        (ids,)
+    )
 
     count = cursor.fetchone()[0]
 

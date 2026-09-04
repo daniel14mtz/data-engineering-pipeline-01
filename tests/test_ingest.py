@@ -1,4 +1,4 @@
-from src.ingest import validate_data
+from src.transform import validate_data, transform_data
 import pytest
 import requests
 
@@ -41,7 +41,6 @@ def test_validate_data_duplicate_id():
         validate_data(data)
 
 def test_transform_data():
-    from src.ingest import transform_data
 
     data = [
         {

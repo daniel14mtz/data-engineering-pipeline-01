@@ -3,9 +3,10 @@ import json
 import logging 
 import time
 
-from src.database import connect_db, create_table, insert_data, count_users
+from src.database import connect_db, create_table, insert_data, count_loaded_users
+from src.transform import validate_data, transform_data
 
-URL = "https://jsonplaceholder.typicode.com/users"
+from src.config import API_URL, RAW_PATH, PROCESSED_PATH
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +23,7 @@ def extract_data():
     for attempt in range(1, max_retries + 1):
 
         try:
-            response = requests.get(URL, timeout=10)
+            response = requests.get(API_URL, timeout=10)
             response.raise_for_status()
 
             data = response.json()
@@ -51,57 +52,6 @@ def extract_data():
                 )
                 raise
 
-def transform_data(data):
-    transformed_data = []
-
-    for user in data:
-        transformed_data.append({
-            "id": user["id"],
-            "name": user["name"].strip(),
-            "email": user["email"].strip().lower()
-        })
-
-    logger.info(f"Transformacion correcta: {len(transformed_data)} registros")
-
-    return transformed_data
-
-def validate_data(data):
-    if not data:
-        raise ValueError("No se recibieron datos")
-
-    required_fields = {"id", "name", "email"}
-
-    for record in data:
-        missing_fields = required_fields - record.keys()
-
-        if missing_fields:
-            raise ValueError(
-                f"Faltan campos en el registro {record.get('id')}: {missing_fields}"
-            )
-
-        if not isinstance(record["id"], int):
-            raise ValueError(
-                f"El ID del registro debe ser entero: {record['id']}"
-            )
-
-        if not record["name"].strip():
-            raise ValueError(
-                f"El nombre del registro {record['id']} no puede estar vacío"
-            )
-
-        if "@" not in record["email"] or "." not in record["email"].split("@")[-1]:
-            raise ValueError(
-                f"Email inválido en el registro {record['id']}: {record['email']}"
-            )
-
-    ids = [record["id"] for record in data]
-
-    if len(ids) != len(set(ids)):
-        raise ValueError("Existen IDs duplicados")
-
-    logger.info(f"Validacion correcta: {len(data)} registros")
-
-
 def save_json(data, path):
     with open(path, "w") as file:
         json.dump(data, file, indent=4)
@@ -111,13 +61,13 @@ def save_json(data, path):
 def main():
     data = extract_data()
 
-    save_json(data, "data/raw/users.json")
+    save_json(data, RAW_PATH)
 
     validate_data(data)
 
     data = transform_data(data)
 
-    save_json(data, "data/processed/users.json")
+    save_json(data, PROCESSED_PATH)
 
     try:
 
@@ -130,7 +80,7 @@ def main():
 
         logger.info("Datos guardados en PostgreSQL")
 
-        loaded_count = count_users(conn)
+        loaded_count = count_loaded_users(conn, data)
 
         if loaded_count != len(data):
             raise ValueError(

@@ -1,6 +1,6 @@
 import psycopg2
 
-from src.database import create_table, insert_data, count_users
+from src.database import create_table, insert_data, count_loaded_users
 
 
 def test_database_connection():
@@ -36,10 +36,10 @@ def test_insert_data_idempotent():
     ]
 
     insert_data(conn, data)
-    first_count = count_users(conn)
+    first_count = count_loaded_users(conn, data)
 
     insert_data(conn, data)
-    second_count = count_users(conn)
+    second_count = count_loaded_users(conn, data)
 
     assert second_count == first_count
 
