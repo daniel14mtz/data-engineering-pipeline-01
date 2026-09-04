@@ -79,6 +79,21 @@ def validate_data(data):
                 f"Faltan campos en el registro {record.get('id')}: {missing_fields}"
             )
 
+        if not isinstance(record["id"], int):
+            raise ValueError(
+                f"El ID del registro debe ser entero: {record['id']}"
+            )
+
+        if not record["name"].strip():
+            raise ValueError(
+                f"El nombre del registro {record['id']} no puede estar vacío"
+            )
+
+        if "@" not in record["email"] or "." not in record["email"].split("@")[-1]:
+            raise ValueError(
+                f"Email inválido en el registro {record['id']}: {record['email']}"
+            )
+
     ids = [record["id"] for record in data]
 
     if len(ids) != len(set(ids)):

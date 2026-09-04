@@ -125,3 +125,51 @@ def test_extract_data_retry(monkeypatch):
 
     assert len(attempts) == 3
     assert data[0]["id"] == 1
+
+def test_validate_data_invalid_id_type():
+    data = [
+        {
+            "id": "ABC",
+            "name": "Juan",
+            "email": "juan@example.com"
+        }
+    ]
+
+    with pytest.raises(ValueError):
+        validate_data(data)
+
+def test_validate_data_empty_name():
+    data = [
+        {
+            "id": 1,
+            "name": "",
+            "email": "juan@example.com"
+        }
+    ]
+
+    with pytest.raises(ValueError):
+        validate_data(data)
+
+def test_validate_data_invalid_email():
+    data = [
+        {
+            "id": 1,
+            "name": "Juan",
+            "email": "juan@example"
+        }
+    ]
+
+    with pytest.raises(ValueError):
+        validate_data(data)
+
+def test_validate_data_empty_email():
+    data = [
+        {
+            "id": 1,
+            "name": "Juan",
+            "email": ""
+        }
+    ]
+
+    with pytest.raises(ValueError):
+        validate_data(data)
